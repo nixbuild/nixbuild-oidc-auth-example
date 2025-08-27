@@ -1,0 +1,43 @@
+name: oidc-simple
+
+on: push
+
+jobs:
+
+  oidc-simple:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Needed when 'oidc: true' for nixbuild-action
+      contents: read
+    steps:
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v33
+
+      - name: Configure nixbuild.net
+        uses: nixbuild/nixbuild-action@master
+        with:
+          # This is a nixbuild.net auth token that has been attenuated with the
+          # following Biscuit policy:
+          #   check if
+          #     jwt_claim("iss", "https://token.actions.githubusercontent.com");
+          #   check if
+          #     jwt_claim("sub", $sub),
+          #     $sub.contains("repo:nixbuild/nixbuild-oidc-auth-example");
+          nixbuild_token: ${{ secrets.nixbuild_token }}
+
+          # 'oidc: true' tells nixbuild-action to automatically fetch an OIDC ID
+          # Token from GitHub and pass it on to nixbuild.net. If you instead
+          # want to fetch the token yourself, add it to an environment variable
+          # named 'NIXBUILDNET_OIDC_ID_TOKEN' before installing
+          # nixbuild-action. The OIDC ID Token should have the audience
+          # 'nixbuild.net'.
+          oidc: true
+
+      - name: Run a simple test build on nixbuild.net
+        run: |
+          export DRV_SEED="$RANDOM$RANDOM"
+          nix build github:nixbuild/nixbench#write-one-file \
+            --impure \
+            --eval-store auto \
+            --store ssh-ng://eu.nixbuild.net \
+            --print-build-logs
