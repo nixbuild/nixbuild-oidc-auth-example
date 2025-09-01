@@ -14,7 +14,7 @@ jobs:
         uses: nixbuild/nix-quick-install-action@v33
 
       - name: Configure nixbuild.net
-        uses: nixbuild/nixbuild-action@master
+        uses: nixbuild/nixbuild-action@v21
         with:
           # This is a nixbuild.net auth token that has been attenuated with the
           # following Biscuit policy:
